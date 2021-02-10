@@ -1,6 +1,5 @@
-import {last, map, mapTo, mergeMap} from 'rxjs/operators';
-import {concat, forkJoin, Observable, ObservedValueOf, of} from 'rxjs';
-import {pipeFromArray} from 'rxjs/internal/util/pipe';
+import {concatAll, last, map, mapTo, mergeMap, tap} from 'rxjs/operators';
+import {concat, defer, forkJoin, from, Observable, ObservedValueOf, of} from 'rxjs';
 import {ObservableInput, ObservedValuesFromArray} from 'rxjs/internal/types';
 
 /**
@@ -44,6 +43,10 @@ export function inParallel(sources: any[] | Object): Observable<any> {
  */
 
 
+type ResultsSoFar = any[];
+type ObservableFromResultsSoFar = ((resultsSoFar: ResultsSoFar)=>ObservableInput<any>);
+type InSequenceElement = ObservableInput<any> | ObservableFromResultsSoFar;
+
 /* tslint:disable:max-line-length */
 export function inSequence(obsOrFactories: []): Observable<[]>;
 export function inSequence<A>(obsOrFactories: [ObservableInput<A>]): Observable<[A]>;
@@ -55,8 +58,19 @@ export function inSequence<A, B, C, D, E, F>(obsOrFactories: [ObservableInput<A>
 export function inSequence<A extends ObservableInput<any>[]>(sources: A): Observable<ObservedValuesFromArray<A>[]>;
 /* tslint:enable:max-line-length */
 
-export function inSequence(obsOrFactories: ObservableOrFactory[]) {
-    return pipeFromArray(obsOrFactories.map(obsFactory => collate(obsFactory)))(of([]));
+export function inSequence(obsOrFactories: InSequenceElement[]) {
+    if (obsOrFactories.length===0) return of([]);
+    return defer(() => {
+        let results: Array<any> = [];
+        const appendToResults = (newResult: any) => results = [...results, newResult];
+        const observables = obsOrFactories.map( obsOrFactory => {
+            const obs$: Observable<any> = from((typeof obsOrFactory === 'function') ? defer(() => obsOrFactory(results)) : obsOrFactory);
+            return obs$.pipe(
+              tap(appendToResults)
+            );
+        })
+        return from(observables).pipe(concatAll(), last(), map(_ => results));
+    });
 }
 
 export function inSequenceUncollated(observables: ObservableInput<any>[]): Observable<void> {
@@ -66,23 +80,3 @@ export function inSequenceUncollated(observables: ObservableInput<any>[]): Obser
 export function inParallelUncollated(observables: ObservableInput<any>[]): Observable<void> {
     return inParallel(observables).pipe(mapTo(void 0));
 }
-
-/**
- * We process the array of values in the sequence as a pipe, where the accumulation of collated values
- * is passed down the pipe.
- *
- * 'collate' is the operator used to process each value, taking the previous accumulation as input and returning
- * the new accumulation.
- */
-
-type ObservableOrFactory = ObservableInput<any> | ((results: any[])=>ObservableInput<any>);
-
-export function collate(
-    obsOrFactory: ObservableOrFactory  // the next value in the array passed to inSequence
-): (source: Observable<any>)=>Observable<any> {  // previous accumulation => new accumulation
-    return source => source.pipe(mergeMap(priorResults => {
-        const obs = (typeof obsOrFactory==='function')? obsOrFactory(priorResults) : obsOrFactory;
-        return obs.pipe(last(), map(newResult => [...priorResults, newResult]));
-    }));
-}
-
