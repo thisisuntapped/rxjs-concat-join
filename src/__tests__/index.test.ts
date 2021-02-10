@@ -135,71 +135,46 @@ describe('rxjs-sequence', () => {
 
     describe('inSequence', () => {
 
-        it('collate should build a resultant array', () => {
+        it('collate final output when inputs all simple observable', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--a|');
-                const e2 =  cold('--b|');
-                const expected = '------(z|))'; const expectedValues = {z: ['a', 'b']};
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('--(b|)');
+                const expected = '----(z|))'; const expectedValues = {z: ['a', 'b']};
 
-                const obs = of([]).pipe(
-                    collate(()=>e1),
-                    collate(()=>e2),
-                );
+                const obs = inSequence([e1, e2]);
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
 
-        it('collate should receive the array to date', () => {
+        it('collate final output when inputs all functions', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--a|');
-                const e2 =  cold('--b|');
-                const expected = '------(z|))'; const expectedValues = {z: ['a', 'b', ['a', 'b']]};
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('--(b|)');
+                const expected = '----(z|))'; const expectedValues = {z: ['a', 'b']};
 
-                const obs = of([]).pipe(
-                    collate(()=>e1),
-                    collate(()=>e2),
-                    collate(([r1, r2])=>of([r1, r2])),
-                );
+                const obs = inSequence([()=>e1, ()=>e2]);
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
 
-        it('collate should provide short cut for independent requests', () => {
+        it('use collated result-so-far within the sequence', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--a|');
-                const e2 =  cold('--b|');
-                const expected = '------(z|))'; const expectedValues = {z: ['a', 'b', ['a', 'b']]};
-
-                const obs = of([]).pipe(
-                    collate(e1),
-                    collate(e2),
-                    collate(([r1, r2])=>of([r1, r2])),
-                );
-
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-
-        it('sequence should invoke all collates', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--a|');
-                const e2 =  cold('--b|');
-                const expected = '------(z|))'; const expectedValues = {z: ['a', 'b', ['a', 'b']]};
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('--(b|)');
+                const expected = '----(z|))'; const expectedValues = {z: ['a', 'b', ['a', 'b']]};
 
                 const obs = inSequence([
                     e1,
-                    e2,
+                    ()=>e2,
                     ([r1, r2])=>of([r1, r2]),
                 ]);
 
                 expectObservable(obs).toBe(expected, expectedValues);
-
             });
         });
 
@@ -230,9 +205,9 @@ describe('rxjs-sequence', () => {
         it('should emit event when all inner observables complete', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--a|');
-                const e2 =  cold('---b|');
-                const expected = '-------(z|)'; const expectedValues = {z: void 0};
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('---(b|)');
+                const expected = '-----(z|)'; const expectedValues = {z: void 0};
 
                 const obs = inSequenceUncollated([e1, e2]);
                 expectObservable(obs).toBe(expected, expectedValues);
@@ -255,9 +230,9 @@ describe('rxjs-sequence', () => {
         it('should emit event when all inner observables complete', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--a|');
-                const e2 =  cold('---b|');
-                const expected = '----(z|)'; const expectedValues = {z: void 0};
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('---(b|)');
+                const expected = '---(z|)'; const expectedValues = {z: void 0};
 
                 const obs = inParallelUncollated([e1, e2]);
                 expectObservable(obs).toBe(expected, expectedValues);
