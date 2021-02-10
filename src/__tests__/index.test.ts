@@ -1,7 +1,7 @@
 import {TestScheduler} from 'rxjs/testing';
-import {concat, from, merge, of} from 'rxjs';
+import {combineLatest, concat, forkJoin, from, merge, of} from 'rxjs';
 import {concatAll, concatMap, delay, toArray} from 'rxjs/operators';
-import {collate, inParallel, inParallelUncollated, inSequence, inSequenceUncollated} from '../index';
+import {inParallel, inParallelUncollated, inSequence, inSequenceUncollated} from '../index';
 
 describe('rxjs-sequence', () => {
     let testScheduler: TestScheduler;
@@ -239,4 +239,12 @@ describe('rxjs-sequence', () => {
             });
         });
     });
+
+    // describe('xxx', () => {
+    //     it.only('xxx', () => {
+    //         forkJoin([[1, 2], ['a']]).subscribe(x => console.log("X: ", x));
+    //         combineLatest([]);
+    //         concat([])
+    //     });
+    // });
 });

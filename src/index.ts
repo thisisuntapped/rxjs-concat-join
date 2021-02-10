@@ -44,27 +44,31 @@ export function inParallel(sources: any[] | Object): Observable<any> {
 
 
 type ResultsSoFar = any[];
-type ObservableFromResultsSoFar = ((resultsSoFar: ResultsSoFar)=>ObservableInput<any>);
-type InSequenceElement = ObservableInput<any> | ObservableFromResultsSoFar;
+type ObservableFromResultsSoFar<T> = ((resultsSoFar: ResultsSoFar)=>ObservableInput<T>);
+type InSequenceElement<T> = ObservableInput<T> | ObservableFromResultsSoFar<T>;
 
 /* tslint:disable:max-line-length */
-export function inSequence(obsOrFactories: []): Observable<[]>;
-export function inSequence<A>(obsOrFactories: [ObservableInput<A>]): Observable<[A]>;
-export function inSequence<A, B>(obsOrFactories: [ObservableInput<A>, ObservableInput<B> | ((priorResults: [A])=>ObservableInput<B>)]): Observable<[A, B]>;
-export function inSequence<A, B, C>(obsOrFactories: [ObservableInput<A>, ObservableInput<B> | ((priorResults: [A])=>ObservableInput<B>), ObservableInput<C> | ((priorResults: [A, B])=>ObservableInput<C>)]): Observable<[A, B, C]>;
-export function inSequence<A, B, C, D>(obsOrFactories: [ObservableInput<A>, ObservableInput<B> | ((priorResults: [A])=>ObservableInput<B>), ObservableInput<C> | ((priorResults: [A, B])=>ObservableInput<C>), ObservableInput<D> | ((priorResults: [A, B, C])=>ObservableInput<D>)]): Observable<[A, B, C, D]>;
-export function inSequence<A, B, C, D, E>(obsOrFactories: [ObservableInput<A>, ObservableInput<B> | ((priorResults: [A])=>ObservableInput<B>), ObservableInput<C> | ((priorResults: [A, B])=>ObservableInput<C>), ObservableInput<D> | ((priorResults: [A, B, C])=>ObservableInput<D>),  ObservableInput<E> | ((priorResults: [A, B, C, D])=>ObservableInput<E>)]): Observable<[A, B, C, D, E]>;
-export function inSequence<A, B, C, D, E, F>(obsOrFactories: [ObservableInput<A>, ObservableInput<B> | ((priorResults: [A])=>ObservableInput<B>), ObservableInput<C> | ((priorResults: [A, B])=>ObservableInput<C>), ObservableInput<D> | ((priorResults: [A, B, C])=>ObservableInput<D>),  ObservableInput<E> | ((priorResults: [A, B, C, D])=>ObservableInput<E>),  ObservableInput<F> | ((priorResults: [A, B, C, D, E])=>ObservableInput<F>)]): Observable<[A, B, C, D, E, F]>;
+export function inSequence(elements: []): Observable<[]>;
+export function inSequence<A>(elements: [InSequenceElement<A>]): Observable<[A]>;
+export function inSequence<A, B>(elements: [InSequenceElement<A>, InSequenceElement<B>]): Observable<[A, B]>;
+export function inSequence<A, B, C>(elements: [InSequenceElement<A>, InSequenceElement<B>, InSequenceElement<C>]): Observable<[A, B, C]>;
+export function inSequence<A, B, C, D>(elements: [InSequenceElement<A>, InSequenceElement<B>, InSequenceElement<C>, InSequenceElement<D>]): Observable<[A, B, C, D]>;
+export function inSequence<A, B, C, D, E>(elements: [InSequenceElement<A>, InSequenceElement<B>, InSequenceElement<C>, InSequenceElement<D>, InSequenceElement<E>]): Observable<[A, B, C, D, E]>;
+export function inSequence<A, B, C, D, E, F>(elements: [InSequenceElement<A>, InSequenceElement<B>, InSequenceElement<C>, InSequenceElement<D>, InSequenceElement<E>, InSequenceElement<F>]): Observable<[A, B, C, D, E, F]>;
 export function inSequence<A extends ObservableInput<any>[]>(sources: A): Observable<ObservedValuesFromArray<A>[]>;
 /* tslint:enable:max-line-length */
 
-export function inSequence(obsOrFactories: InSequenceElement[]) {
-    if (obsOrFactories.length===0) return of([]);
+export function inSequence(elements: any[]) {
+    if (elements.length===0) return of([]);
     return defer(() => {
         let results: Array<any> = [];
         const appendToResults = (newResult: any) => results = [...results, newResult];
-        const observables = obsOrFactories.map( obsOrFactory => {
-            const obs$: Observable<any> = from((typeof obsOrFactory === 'function') ? defer(() => obsOrFactory(results)) : obsOrFactory);
+        const observables = elements.map( element => {
+            const obs$: Observable<any> = from(
+                (typeof element === 'function') ?
+                    defer(() => element(results)) :
+                    element
+            );
             return obs$.pipe(
               tap(appendToResults)
             );
