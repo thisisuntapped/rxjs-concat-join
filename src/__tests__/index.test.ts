@@ -161,7 +161,7 @@ describe('rxjs-sequence', () => {
             });
         });
 
-        it('use collated result-so-far within the sequence', () => {
+        it('use result-so-far within the sequence', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
                 const e1 =  cold('--(a|)');
@@ -188,6 +188,97 @@ describe('rxjs-sequence', () => {
             });
         });
 
+        it('should emit {} for input [{}]', () => {
+            testScheduler.run(helpers => {
+                const {cold, expectObservable, expectSubscriptions} = helpers;
+                const expected = '(z|))'; const expectedValues = {z: {}};
+
+                const obs = inSequence([{}]);
+                expectObservable(obs).toBe(expected, expectedValues);
+            });
+        });
+
+        it('array of objects of observable', () => {
+            testScheduler.run(helpers => {
+                const {cold, expectObservable, expectSubscriptions} = helpers;
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('--(b|)');
+                const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b'}};
+
+                const obs = inSequence([
+                    {a: e1},
+                    {b: e2},
+                ]);
+
+                expectObservable(obs).toBe(expected, expectedValues);
+            });
+        });
+
+        it('array of objects of function', () => {
+            testScheduler.run(helpers => {
+                const {cold, expectObservable, expectSubscriptions} = helpers;
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('--(b|)');
+                const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b'}};
+
+                const obs = inSequence([
+                    {a: ()=>e1},
+                    {b: ()=>e2},
+                ]);
+
+                expectObservable(obs).toBe(expected, expectedValues);
+            });
+        });
+
+        it('array of objects of differing observable and function', () => {
+            testScheduler.run(helpers => {
+                const {cold, expectObservable, expectSubscriptions} = helpers;
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('--(b|)');
+                const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b'}};
+
+                const obs = inSequence([
+                    {a: e1},
+                    {b: ()=>e2},
+                ]);
+
+                expectObservable(obs).toBe(expected, expectedValues);
+            });
+        });
+
+        it('array of objects with later one receiving resuts so far', () => {
+            testScheduler.run(helpers => {
+                const {cold, expectObservable, expectSubscriptions} = helpers;
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('--(b|)');
+                const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b', c:'bb'}};
+
+                const obs = inSequence([
+                    {a: e1},
+                    {b: ()=>e2},
+                    {c: ({b})=>of(b + b)},
+                ]);
+
+                expectObservable(obs).toBe(expected, expectedValues);
+            });
+        });
+
+        it('array of objects with multiple values', () => {
+            testScheduler.run(helpers => {
+                const {cold, expectObservable, expectSubscriptions} = helpers;
+                const e1 =  cold('--(a|)');
+                const e2 =  cold('--(b|)');
+                const e3 =  cold('--(c|)');
+                const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b', c:'c'}};
+
+                const obs = inSequence([
+                    {a: e1, b: e2},
+                    {c: e3},
+                ]);
+
+                expectObservable(obs).toBe(expected, expectedValues);
+            });
+        });
     });
 
     describe('inSequenceUncollated', () => {
@@ -240,11 +331,4 @@ describe('rxjs-sequence', () => {
         });
     });
 
-    // describe('xxx', () => {
-    //     it.only('xxx', () => {
-    //         forkJoin([[1, 2], ['a']]).subscribe(x => console.log("X: ", x));
-    //         combineLatest([]);
-    //         concat([])
-    //     });
-    // });
 });

@@ -1,5 +1,5 @@
 import {concatAll, last, map, mapTo, mergeMap, tap} from 'rxjs/operators';
-import {concat, defer, forkJoin, from, Observable, ObservedValueOf, of} from 'rxjs';
+import {concat, defer, forkJoin, from, Observable, ObservedValueOf, of, throwError} from 'rxjs';
 import {ObservableInput, ObservedValuesFromArray} from 'rxjs/internal/types';
 
 /**
@@ -21,6 +21,9 @@ export function inParallel<A, B, C, D, E, F>(sources: [ObservableInput<A>, Obser
 export function inParallel<A extends ObservableInput<any>[]>(sources: A): Observable<ObservedValuesFromArray<A>[]>;
 export function inParallel(sourcesObject: {}): Observable<{}>;
 export function inParallel<T, K extends keyof T>(sourcesObject: T): Observable<{ [K in keyof T]: ObservedValueOf<T[K]> }>;
+
+
+
 /* tslint:enable:max-line-length */
 
 // tslint:disable-next-line:ban-types
@@ -42,39 +45,95 @@ export function inParallel(sources: any[] | Object): Observable<any> {
  *
  */
 
+type SimpleObject<T> = {[key: string]: T}
 
-type ResultsSoFar = any[];
-type ObservableFromResultsSoFar<T> = ((resultsSoFar: ResultsSoFar)=>ObservableInput<T>);
-type InSequenceElement<T> = ObservableInput<T> | ObservableFromResultsSoFar<T>;
+type ObservableFromResultsSoFarAsArray<T> = ( (resultsSoFar: any[]) => ObservableInput<T>);
+type ObservableOrObservableFromResultsSoFarAsArray<T> = ObservableInput<T> | ObservableFromResultsSoFarAsArray<T>;
+type ObsOrArrFunc<T> = ObservableOrObservableFromResultsSoFarAsArray<T>; // synonym to reduce verbosity
+
+type ObservableFromResultsSoFarAsObject<T> = ( (resultsSoFar: SimpleObject<any>) => ObservableInput<T>);
+type ObservableOrObservableFromResultsSoFarAsObject<T> = ObservableInput<T> | ObservableFromResultsSoFarAsObject<T>;
+type ObsOrObjFunc<T> = ObservableOrObservableFromResultsSoFarAsObject<T>; // synonym to reduce verbosity
 
 /* tslint:disable:max-line-length */
 export function inSequence(elements: []): Observable<[]>;
-export function inSequence<A>(elements: [InSequenceElement<A>]): Observable<[A]>;
-export function inSequence<A, B>(elements: [InSequenceElement<A>, InSequenceElement<B>]): Observable<[A, B]>;
-export function inSequence<A, B, C>(elements: [InSequenceElement<A>, InSequenceElement<B>, InSequenceElement<C>]): Observable<[A, B, C]>;
-export function inSequence<A, B, C, D>(elements: [InSequenceElement<A>, InSequenceElement<B>, InSequenceElement<C>, InSequenceElement<D>]): Observable<[A, B, C, D]>;
-export function inSequence<A, B, C, D, E>(elements: [InSequenceElement<A>, InSequenceElement<B>, InSequenceElement<C>, InSequenceElement<D>, InSequenceElement<E>]): Observable<[A, B, C, D, E]>;
-export function inSequence<A, B, C, D, E, F>(elements: [InSequenceElement<A>, InSequenceElement<B>, InSequenceElement<C>, InSequenceElement<D>, InSequenceElement<E>, InSequenceElement<F>]): Observable<[A, B, C, D, E, F]>;
-export function inSequence<A extends ObservableInput<any>[]>(sources: A): Observable<ObservedValuesFromArray<A>[]>;
+export function inSequence<A>(elements: [ObsOrArrFunc<A>]): Observable<[A]>;
+export function inSequence<A, B>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>]): Observable<[A, B]>;
+export function inSequence<A, B, C>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>]): Observable<[A, B, C]>;
+export function inSequence<A, B, C, D>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>, ObsOrArrFunc<D>]): Observable<[A, B, C, D]>;
+export function inSequence<A, B, C, D, E>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>, ObsOrArrFunc<D>, ObsOrArrFunc<E>]): Observable<[A, B, C, D, E]>;
+export function inSequence<A, B, C, D, E, F>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>, ObsOrArrFunc<D>, ObsOrArrFunc<E>, ObsOrArrFunc<F>]): Observable<[A, B, C, D, E, F]>;
+export function inSequence<T>(elements: [T]): Observable<{ [K in keyof T]: ObservedValueOf<T[K]> }>;
+
+export function inSequence(elements: [{}]): Observable<{}>;
+export function inSequence(elements: SimpleObject<ObsOrObjFunc<any>>[]): any;
 /* tslint:enable:max-line-length */
 
-export function inSequence(elements: any[]) {
+export function inSequence(elements: any[] ) {
     if (elements.length===0) return of([]);
+
+    // defer so that we can use local variables that are scoped correctly
     return defer(() => {
-        let results: Array<any> = [];
-        const appendToResults = (newResult: any) => results = [...results, newResult];
+
+        // All elements must be pojos or not.  Use the 1st element to determine which.
+        let resultTypeIsObject = isPOJO(elements[0]);
+        let resultsAsArray: Array<any> = [];
+        let resultsAsObject = {};
+
+        const appendToArray = (newResult: any) =>
+            resultsAsArray = [...resultsAsArray, newResult];
+
+        const appendToObject = (newResult: any) =>
+            resultsAsObject = {...resultsAsObject, ...newResult};
+
+        // Convert the sequence of different element types (observables, functions that take the results-so-far and
+        // return observables, and objects and convert them in to proper observables.
         const observables = elements.map( element => {
-            const obs$: Observable<any> = from(
-                (typeof element === 'function') ?
-                    defer(() => element(results)) :
-                    element
-            );
-            return obs$.pipe(
-              tap(appendToResults)
-            );
+
+            if (isPOJO(element)) {
+
+                if (!resultTypeIsObject) throw new Error("Mismatch in sequence element types");
+
+                // Use defer to use the value of results-so-far at the point of subscription for all inner
+                // functions at once
+                return defer ( ()=> inParallel(
+                    // replace all values for the object with proper observables, ie if its a function then call
+                    // the function with the results-so-far.
+                    Object.fromEntries(Object.entries(element).map(([k, obsOrFunc]) =>
+                        [k, typeof obsOrFunc === 'function' ? obsOrFunc(resultsAsObject) : obsOrFunc]
+                    ))
+                )).pipe(
+                    last(),
+                    tap(appendToObject)
+                );
+
+            } else {
+
+                if (resultTypeIsObject) throw new Error("Mismatch in sequence element types");
+
+                return from(
+                    typeof element === 'function'?
+                        // Use defer to use the value of results-so-far at the point of subscription
+                        defer(() => element(resultsAsArray)) :
+                        element
+                ).pipe(
+                    last(),
+                    tap(appendToArray)
+                );
+            }
         })
-        return from(observables).pipe(concatAll(), last(), map(_ => results));
+
+        return from(observables).pipe(
+            concatAll(),
+            last(),
+            map(_ => resultTypeIsObject? resultsAsObject : resultsAsArray)
+        );
     });
+}
+
+// This utility function is copied from the RxJS implementation of forkJoin
+function isPOJO(obj: any): obj is object {
+    return obj && typeof obj === 'object' && Object.getPrototypeOf(obj) === Object.prototype;
 }
 
 export function inSequenceUncollated(observables: ObservableInput<any>[]): Observable<void> {
