@@ -279,6 +279,18 @@ describe('rxjs-sequence', () => {
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
+
+        // UNCOMMENT THE FOLLOWING TEST AND CONFIRM THAT ALL CALLS TO inSequence GENERATE A COMPILATION ERROR
+        // it('should get a compilation error', () => {
+        //     let obs;
+        //     obs = inSequence([1]);
+        //     obs = inSequence(['a']);  // No error - a string has an iterator so matches standard ObservableInput
+        //     obs = inSequence([true]);
+        //     obs = inSequence({a: of('a')});
+        //     obs = inSequence([{a: 1}]);
+        //     obs = inSequence([{a: 'a'}]); // No error - a string has an iterator so matches standard ObservableInput
+        //     obs = inSequence([{a: true}]);
+        // });
     });
 
     describe('inSequenceUncollated', () => {
@@ -330,5 +342,7 @@ describe('rxjs-sequence', () => {
             });
         });
     });
+
+
 
 });

@@ -54,6 +54,9 @@ type ObsOrArrFunc<T> = ObservableOrObservableFromResultsSoFarAsArray<T>; // syno
 type ObservableFromResultsSoFarAsObject<T> = ( (resultsSoFar: SimpleObject<any>) => ObservableInput<T>);
 type ObservableOrObservableFromResultsSoFarAsObject<T> = ObservableInput<T> | ObservableFromResultsSoFarAsObject<T>;
 type ObsOrObjFunc<T> = ObservableOrObservableFromResultsSoFarAsObject<T>; // synonym to reduce verbosity
+type MapOfObsOrObjFunc<T> = SimpleObject<ObsOrObjFunc<any>>;
+
+type InSequenceElement = ObsOrArrFunc<any> | MapOfObsOrObjFunc<any>
 
 /* tslint:disable:max-line-length */
 export function inSequence(elements: []): Observable<[]>;
@@ -63,13 +66,13 @@ export function inSequence<A, B, C>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>,
 export function inSequence<A, B, C, D>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>, ObsOrArrFunc<D>]): Observable<[A, B, C, D]>;
 export function inSequence<A, B, C, D, E>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>, ObsOrArrFunc<D>, ObsOrArrFunc<E>]): Observable<[A, B, C, D, E]>;
 export function inSequence<A, B, C, D, E, F>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>, ObsOrArrFunc<D>, ObsOrArrFunc<E>, ObsOrArrFunc<F>]): Observable<[A, B, C, D, E, F]>;
-export function inSequence<T>(elements: [T]): Observable<{ [K in keyof T]: ObservedValueOf<T[K]> }>;
+// export function inSequence<T>(elements: [T]): Observable<{ [K in keyof T]: ObservedValueOf<T[K]> }>;
 
-export function inSequence(elements: [{}]): Observable<{}>;
-export function inSequence(elements: SimpleObject<ObsOrObjFunc<any>>[]): any;
+// export function inSequence(elements: [{}]): Observable<{}>;
+export function inSequence(elements: MapOfObsOrObjFunc<any>[]): any;
 /* tslint:enable:max-line-length */
 
-export function inSequence(elements: any[] ) {
+export function inSequence(elements: InSequenceElement[] ) {
     if (elements.length===0) return of([]);
 
     // defer so that we can use local variables that are scoped correctly
@@ -89,7 +92,6 @@ export function inSequence(elements: any[] ) {
         // Convert the sequence of different element types (observables, functions that take the results-so-far and
         // return observables, and objects and convert them in to proper observables.
         const observables = elements.map( element => {
-
             if (isPOJO(element)) {
 
                 if (!resultTypeIsObject) throw new Error("Mismatch in sequence element types");
@@ -132,7 +134,7 @@ export function inSequence(elements: any[] ) {
 }
 
 // This utility function is copied from the RxJS implementation of forkJoin
-function isPOJO(obj: any): obj is object {
+function isPOJO(obj: any): obj is MapOfObsOrObjFunc<any> {
     return obj && typeof obj === 'object' && Object.getPrototypeOf(obj) === Object.prototype;
 }
 
