@@ -45,18 +45,18 @@ export function inParallel(sources: any[] | Object): Observable<any> {
  *
  */
 
-type SimpleObject<T> = {[key: string]: T}
+type MapToValueType<T> = {[key: string]: T}
 
 type ObservableFromResultsSoFarAsArray<T> = ( (resultsSoFar: any[]) => ObservableInput<T>);
 type ObservableOrObservableFromResultsSoFarAsArray<T> = ObservableInput<T> | ObservableFromResultsSoFarAsArray<T>;
 type ObsOrArrFunc<T> = ObservableOrObservableFromResultsSoFarAsArray<T>; // synonym to reduce verbosity
 
-type ObservableFromResultsSoFarAsObject<T> = ( (resultsSoFar: SimpleObject<any>) => ObservableInput<T>);
+type ObservableFromResultsSoFarAsObject<T> = ( (resultsSoFar: MapToValueType<any>) => ObservableInput<T>);
 type ObservableOrObservableFromResultsSoFarAsObject<T> = ObservableInput<T> | ObservableFromResultsSoFarAsObject<T>;
 type ObsOrObjFunc<T> = ObservableOrObservableFromResultsSoFarAsObject<T>; // synonym to reduce verbosity
-type MapOfObsOrObjFunc<T> = SimpleObject<ObsOrObjFunc<any>>;
+type MapToObsOrObjFunc<T> = MapToValueType<ObsOrObjFunc<T>>;
 
-type InSequenceObjectElementInput = MapOfObsOrObjFunc<any>;
+type InSequenceObjectElementInput = MapToObsOrObjFunc<any>;
 
 type InSequenceObjectElementOuput<T extends InSequenceObjectElementInput> = {
     [P in keyof T]:
@@ -79,7 +79,7 @@ type Test4 = InSequenceObjectElementOuput<typeof test4>
 
 
 
-type InSequenceElement = ObsOrArrFunc<any> | MapOfObsOrObjFunc<any>
+type InSequenceElement = ObsOrArrFunc<any> | MapToObsOrObjFunc<any>
 
 
 
@@ -97,7 +97,7 @@ export function inSequence(elements: [{}]): Observable<{}>;
 export function inSequence<A>(elements: [{}]): Observable<{}>;
 
 
-export function inSequence(elements: MapOfObsOrObjFunc<any>[]): any;
+export function inSequence(elements: MapToObsOrObjFunc<any>[]): any;
 /* tslint:enable:max-line-length */
 
 export function inSequence(elements: InSequenceElement[] ) {
@@ -163,7 +163,7 @@ export function inSequence(elements: InSequenceElement[] ) {
 
 
 // This utility function is copied from the RxJS implementation of forkJoin
-function isPOJO(obj: any): obj is MapOfObsOrObjFunc<any> {
+function isPOJO(obj: any): obj is MapToObsOrObjFunc<any> {
     return obj && typeof obj === 'object' && Object.getPrototypeOf(obj) === Object.prototype;
 }
 
