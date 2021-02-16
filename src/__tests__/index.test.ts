@@ -316,6 +316,40 @@ describe('rxjs-sequence', () => {
                 const i1: number = result.a;  // this should generate a compilation error
                 const s2: string = result.b;  // this should generate a compilation error
             });
+
+            inSequence([
+                {a: of(1)},
+            ]).subscribe(result => {
+                const s1: string = result.a;  // this should generate a compilation error
+                const i1: number = result.a;
+                const s2: string = result.b;  // this should generate a compilation error
+            });
+
+            inSequence([
+                {a: of('a')},
+                {b: of(1)},
+            ]).subscribe(result => {
+                const s1: string = result.a;
+                const i1: number = result.a;  // this should generate a compilation error
+                const s2: string = result.b;  // this should generate a compilation error
+                const i2: number = result.b;
+                const s3: string = result.c;  // this should generate a compilation error
+            });
+
+            inSequence([
+                {a: of('a')},
+                {b: ({a}) => {
+                    const s: string = a;
+                    const n: number = a;  // this should generate a compilation error
+                    return of(1);
+                }},
+            ]).subscribe(result => {
+                const s1: string = result.a;
+                const i1: number = result.a;  // this should generate a compilation error
+                const s2: string = result.b;  // this should generate a compilation error
+                const i2: number = result.b;
+                const s3: string = result.c;  // this should generate a compilation error
+            });
         });
     });
 

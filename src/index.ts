@@ -56,32 +56,8 @@ type ObservableOrObservableFromResultsSoFarAsObject<T> = ObservableInput<T> | Ob
 type ObsOrObjFunc<T> = ObservableOrObservableFromResultsSoFarAsObject<T>; // synonym to reduce verbosity
 type MapToObsOrObjFunc<T> = MapToValueType<ObsOrObjFunc<T>>;
 
-type InSequenceObjectElementInput = MapToObsOrObjFunc<any>;
-
-type InSequenceObjectElementOuput<T extends InSequenceObjectElementInput> = {
-    [P in keyof T]:
-        T[P] extends ObservableInput<infer U>
-            ? ObservedValueOf<U>
-            : T[P] extends ObservableFromResultsSoFarAsObject<infer U>
-            ? ObservedValueOf<U>
-            : never;
-}
-
-
-const test1 = {a: of('a')};
-type Test1 = InSequenceObjectElementOuput<typeof test1>
-const test2 = {a: of(1)};
-type Test2 = InSequenceObjectElementOuput<typeof test2>
-const test3 = {a: of(1), b:of('a')};
-type Test3 = InSequenceObjectElementOuput<typeof test3>
-const test4 = {a: of(1), b:()=>of('a')};
-type Test4 = InSequenceObjectElementOuput<typeof test4>
-
-
-
-type InSequenceElement = ObsOrArrFunc<any> | MapToObsOrObjFunc<any>
-
-
+type Obj = MapToObsOrObjFunc<any> // short synonym for object form InSequence element
+type ObjResult<T> = Observable<{ [P in keyof T]: T[P] extends ObservableInput<infer U> ? U : T[P] extends ObservableFromResultsSoFarAsObject<infer U>? U :never}>
 
 /* tslint:disable:max-line-length */
 export function inSequence(elements: []): Observable<[]>;
@@ -91,16 +67,20 @@ export function inSequence<A, B, C>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>,
 export function inSequence<A, B, C, D>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>, ObsOrArrFunc<D>]): Observable<[A, B, C, D]>;
 export function inSequence<A, B, C, D, E>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>, ObsOrArrFunc<D>, ObsOrArrFunc<E>]): Observable<[A, B, C, D, E]>;
 export function inSequence<A, B, C, D, E, F>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>, ObsOrArrFunc<C>, ObsOrArrFunc<D>, ObsOrArrFunc<E>, ObsOrArrFunc<F>]): Observable<[A, B, C, D, E, F]>;
-// export function inSequence<T>(elements: [T]): Observable<{ [K in keyof T]: ObservedValueOf<T[K]> }>;
 
 export function inSequence(elements: [{}]): Observable<{}>;
-export function inSequence<A>(elements: [{}]): Observable<{}>;
+export function inSequence<T extends Obj>(elements: [T]) : ObjResult<T>
+export function inSequence<A extends Obj, B extends Obj, T extends A&B>(elements: [A, B]) : ObjResult<T>
+export function inSequence<A extends Obj, B extends Obj, C extends Obj, T extends A&B&C>(elements: [A, B, C]) : ObjResult<T>
+export function inSequence<A extends Obj, B extends Obj, C extends Obj, D extends Obj, T extends A&B&C&D>(elements: [A, B, C, D]) : ObjResult<T>
+export function inSequence<A extends Obj, B extends Obj, C extends Obj, D extends Obj, E extends Obj, T extends A&B&C&D&E>(elements: [A, B, C, D, E]) : ObjResult<T>
+export function inSequence<A extends Obj, B extends Obj, C extends Obj, D extends Obj, E extends Obj, F extends Obj, T extends A&B&C&D&E&F>(elements: [A, B, C, D, E, F]) : ObjResult<T>
 
 
 export function inSequence(elements: MapToObsOrObjFunc<any>[]): any;
 /* tslint:enable:max-line-length */
 
-export function inSequence(elements: InSequenceElement[] ) {
+export function inSequence(elements: (ObsOrArrFunc<any> | MapToObsOrObjFunc<any>)[] ) {
     if (elements.length===0) return of([]);
 
     // defer so that we can use local variables that are scoped correctly
