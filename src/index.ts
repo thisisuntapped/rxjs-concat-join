@@ -91,9 +91,9 @@ type ObjResult<T> = Observable<{ [P in keyof T]: T[P] extends ObservableInput<in
 
 /* tslint:disable:max-line-length */
 export function inSequence(): Observable<[]>;
-export function inSequence<A>(source1: ObsOrArrFunc2<any, A>): Observable<[A]>;
-export function inSequence<A, B>(source1: ObsOrArrFunc<A>, source2: ObsOrArrFunc<B>): Observable<[A,B]>;
-export function inSequence<A, B, C>(source1: ObsOrArrFunc<A>, source2: ObsOrArrFunc<B>, source3: ObsOrArrFunc<C>): Observable<[A,B, C]>;
+export function inSequence<A>(source1: ObsOrArrFunc2<any,A>): Observable<[A]>;
+export function inSequence<A, B>(source1: ObsOrArrFunc2<any,A>, source2: ObsOrArrFunc2<[A],B>): Observable<[A,B]>;
+export function inSequence<A, B, C>(source1: ObsOrArrFunc2<any,A>, source2: ObsOrArrFunc2<[A],B>, source3: ObsOrArrFunc2<[A,B],C>): Observable<[A,B,C]>;
 // // export function inSequence<A, B>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc<B>]): Observable<[A, B]>;
 //
 // export function inSequence<A, B, C>(elements: [ObsOrArrFunc<A>, ObsOrArrFunc2<[A],B>, ObsOrArrFunc2<[A,B],C> ]): Observable<[A,B,C]>;
