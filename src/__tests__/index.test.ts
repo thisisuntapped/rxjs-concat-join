@@ -3,6 +3,7 @@ import {combineLatest, concat, forkJoin, from, merge, of} from 'rxjs';
 import {concatAll, concatMap, delay, toArray} from 'rxjs/operators';
 import {inParallel, inParallelUncollated, inSequence, inSequenceUncollated} from '../index';
 
+
 describe('rxjs-sequence', () => {
     let testScheduler: TestScheduler;
 
@@ -135,6 +136,16 @@ describe('rxjs-sequence', () => {
 
     describe('inSequence', () => {
 
+        it('should emit [] if no input', () => {
+            testScheduler.run(helpers => {
+                const {cold, expectObservable, expectSubscriptions} = helpers;
+                const expected = '(z|))'; const expectedValues = {z: []};
+
+                const obs = inSequence();
+                expectObservable(obs).toBe(expected, expectedValues);
+            });
+        });
+
         it('collate final output when inputs all simple observable', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
@@ -142,128 +153,92 @@ describe('rxjs-sequence', () => {
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: ['a', 'b']};
 
-                const obs = inSequence([e1, e2]);
+                const obs = inSequence(e1, e2);
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
 
-        it('collate final output when inputs all functions', () => {
+        it('collate final output when inputs all factories', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
                 const e1 =  cold('--(a|)');
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: ['a', 'b']};
 
-                const obs = inSequence([()=>e1, ()=>e2]);
+                const obs = inSequence(()=>e1, ()=>e2);
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
 
-        it('use result-so-far within the sequence', () => {
+        it('use array-style result-so-far, mixing observables and factories', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
                 const e1 =  cold('--(a|)');
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: ['a', 'b', ['a', 'b']]};
 
-                const obs = inSequence([
+                const obs = inSequence(
                     e1,
                     ()=>e2,
                     ([r1, r2])=>of([r1, r2]),
-                ]);
+                );
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
 
-        it('should emit [] for input []', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const expected = '(z|))'; const expectedValues = {z: []};
-
-                const obs = inSequence([]);
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-
-        it('should emit {} for input [{}]', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const expected = '(z|))'; const expectedValues = {z: {}};
-
-                const obs = inSequence([{}]);
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-
-        it('array of objects of observable', () => {
+        it('collate final output when inputs all objects of simple observable', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
                 const e1 =  cold('--(a|)');
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b'}};
 
-                const obs = inSequence([
+                const obs = inSequence(
                     {a: e1},
                     {b: e2},
-                ]);
+                );
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
 
-        it('array of objects of function', () => {
+        it('collate final output when inputs all objects of factories', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
                 const e1 =  cold('--(a|)');
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b'}};
 
-                const obs = inSequence([
+                const obs = inSequence(
                     {a: ()=>e1},
                     {b: ()=>e2},
-                ]);
+                );
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
 
-        it('array of objects of differing observable and function', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--(a|)');
-                const e2 =  cold('--(b|)');
-                const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b'}};
-
-                const obs = inSequence([
-                    {a: e1},
-                    {b: ()=>e2},
-                ]);
-
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-
-        it('array of objects with later one receiving resuts so far', () => {
+        it('use object-style result-so-far, mixing observables and factories', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
                 const e1 =  cold('--(a|)');
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b', c:'bb'}};
 
-                const obs = inSequence([
+                const obs = inSequence(
                     {a: e1},
                     {b: ()=>e2},
                     {c: ({b})=>of(b + b)},
-                ]);
+                );
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
 
-        it('array of objects with multiple values', () => {
+        it('allow object values to have multiple properties which are forkedJoined and merged into the output', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
                 const e1 =  cold('--(a|)');
@@ -271,10 +246,10 @@ describe('rxjs-sequence', () => {
                 const e3 =  cold('--(c|)');
                 const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b', c:'c'}};
 
-                const obs = inSequence([
+                const obs = inSequence(
                     {a: e1, b: e2},
                     {c: e3},
-                ]);
+                );
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
@@ -291,66 +266,83 @@ describe('rxjs-sequence', () => {
         //     obs = inSequence([{a: 'a'}]); // No error - a string has an iterator so matches standard ObservableInput
         //     obs = inSequence([{a: true}]);
         // });
-
-        // UNCOMMENT THE FOLLOWING TESTs AND CONFIRM THAT ANNOTATED LINES GENERATE A COMPILATION ERROR
-        it('should pass on the correct derived types', () => {
-
-            inSequence([
-                of('a'),
-                ([a]) => {
-                    const s: string = a;
-                    const n: number = a;  // this should generate a compilation error
-                    return of(1)
-                },
-            ]).subscribe(result => {
-                const s0: string = result[0];
-                const i0: number = result[0];  // this should generate a compilation error
-                const s1: string = result[1];  // this should generate a compilation error
-                const i1: number = result[1];
-            });
-
-            inSequence([
-                {a: of('a')},
-            ]).subscribe(result => {
-                const s1: string = result.a;
-                const i1: number = result.a;  // this should generate a compilation error
-                const s2: string = result.b;  // this should generate a compilation error
-            });
-
-            inSequence([
-                {a: of(1)},
-            ]).subscribe(result => {
-                const s1: string = result.a;  // this should generate a compilation error
-                const i1: number = result.a;
-                const s2: string = result.b;  // this should generate a compilation error
-            });
-
-            inSequence([
-                {a: of('a')},
-                {b: of(1)},
-            ]).subscribe(result => {
-                const s1: string = result.a;
-                const i1: number = result.a;  // this should generate a compilation error
-                const s2: string = result.b;  // this should generate a compilation error
-                const i2: number = result.b;
-                const s3: string = result.c;  // this should generate a compilation error
-            });
-
-            inSequence([
-                {a: of('a')},
-                {b: ({a}) => {
-                    const s: string = a;
-                    const n: number = a;  // this should generate a compilation error
-                    return of(1);
-                }},
-            ]).subscribe(result => {
-                const s1: string = result.a;
-                const i1: number = result.a;  // this should generate a compilation error
-                const s2: string = result.b;  // this should generate a compilation error
-                const i2: number = result.b;
-                const s3: string = result.c;  // this should generate a compilation error
-            });
-        });
+        //
+        // // UNCOMMENT THE FOLLOWING TESTs AND CONFIRM THAT ANNOTATED LINES GENERATE A COMPILATION ERROR
+        // it('should pass on the correct derived types', () => {
+        //
+        //     inSequence([
+        //         of('a'),
+        //         ([a]) => {
+        //             const s: string = a;
+        //             const n: number = a;  // this should generate a compilation error
+        //             return of(1)
+        //         },
+        //     ]).subscribe(result => {
+        //         const s0: string = result[0];
+        //         const i0: number = result[0];  // this should generate a compilation error
+        //         const s1: string = result[1];  // this should generate a compilation error
+        //         const i1: number = result[1];
+        //     });
+        //
+        //     inSequence([
+        //         of('a'),
+        //         ([a]) => of(1),
+        //         ([a, b]) => {
+        //             const s: string = a;
+        //             const n: number = a;  // this should generate a compilation error
+        //             const s: string = a;
+        //             const n: number = a;  // this should generate a compilation error
+        //             return of(1)
+        //         },
+        //     ]).subscribe(result => {
+        //         const s0: string = result[0];
+        //         const i0: number = result[0];  // this should generate a compilation error
+        //         const s1: string = result[1];  // this should generate a compilation error
+        //         const i1: number = result[1];
+        //     });
+        //
+        //     inSequence([
+        //         {a: of('a')},
+        //     ]).subscribe(result => {
+        //         const s1: string = result.a;
+        //         const i1: number = result.a;  // this should generate a compilation error
+        //         const s2: string = result.b;  // this should generate a compilation error
+        //     });
+        //
+        //     inSequence([
+        //         {a: of(1)},
+        //     ]).subscribe(result => {
+        //         const s1: string = result.a;  // this should generate a compilation error
+        //         const i1: number = result.a;
+        //         const s2: string = result.b;  // this should generate a compilation error
+        //     });
+        //
+        //     inSequence([
+        //         {a: of('a')},
+        //         {b: of(1)},
+        //     ]).subscribe(result => {
+        //         const s1: string = result.a;
+        //         const i1: number = result.a;  // this should generate a compilation error
+        //         const s2: string = result.b;  // this should generate a compilation error
+        //         const i2: number = result.b;
+        //         const s3: string = result.c;  // this should generate a compilation error
+        //     });
+        //
+        //     inSequence([
+        //         {a: of('a')},
+        //         {b: ({a}) => {
+        //             const s: string = a;
+        //             const n: number = a;  // this should generate a compilation error
+        //             return of(1);
+        //         }},
+        //     ]).subscribe(result => {
+        //         const s1: string = result.a;
+        //         const i1: number = result.a;  // this should generate a compilation error
+        //         const s2: string = result.b;  // this should generate a compilation error
+        //         const i2: number = result.b;
+        //         const s3: string = result.c;  // this should generate a compilation error
+        //     });
+        // });
     });
 
     describe('inSequenceUncollated', () => {
