@@ -1,5 +1,5 @@
 import {TestScheduler} from 'rxjs/testing';
-import {combineLatest, concat, forkJoin, from, merge, of} from 'rxjs';
+import {concat, from, merge, of} from 'rxjs';
 import {concatAll, concatMap, delay, toArray} from 'rxjs/operators';
 import {inParallel, inParallelUncollated, inSequence, inSequenceUncollated} from '../index';
 
@@ -256,70 +256,70 @@ describe('rxjs-sequence', () => {
         });
 
         // UNCOMMENT THE FOLLOWING TEST AND CONFIRM THAT ANNOTATED CALLS TO inSequence GENERATE A COMPILATION ERROR
-        it('should get a compilation error with invalId inputs to inSequence', () => {
-            let obs;
-            obs = inSequence(1);
-            obs = inSequence('a');  // No error - a string has an iterator so matches standard ObservableInput
-            obs = inSequence(true);
-            obs = inSequence({a: 1});
-            obs = inSequence({a: 'a'}); // No error - a string has an iterator so matches standard ObservableInput
-            obs = inSequence({a: true});
-        });
+        // it('should get a compilation error with invalId inputs to inSequence', () => {
+        //     let obs;
+        //     obs = inSequence(1);
+        //     obs = inSequence('a');  // No error - a string has an iterator so matches standard ObservableInput
+        //     obs = inSequence(true);
+        //     obs = inSequence({a: 1});
+        //     obs = inSequence({a: 'a'}); // No error - a string has an iterator so matches standard ObservableInput
+        //     obs = inSequence({a: true});
+        // });
 
         // UNCOMMENT THE FOLLOWING TESTs AND CONFIRM THAT ANNOTATED LINES GENERATE A COMPILATION ERROR
-        it('should pass on the correct derived types', () => {
-
-            inSequence(
-                of('a'),
-                ([a]) => {
-                    const s: string = a;
-                    const n: number = a;  // this should generate a compilation error
-                    return of(1)
-                },
-            ).subscribe(result => {
-                const s0: string = result[0];
-                const i0: number = result[0];  // this should generate a compilation error
-                const s1: string = result[1];  // this should generate a compilation error
-                const i1: number = result[1];
-            });
-
-            inSequence(
-                of('a'),
-                ([a]) => of(1),
-                ([a, b]) => {
-                    const s0: string = a;
-                    const i0: number = a;  // this should generate a compilation error
-                    const s1: string = b;
-                    const i1: number = b;  // this should generate a compilation error
-                    return of(1)
-                },
-            ).subscribe(result => {
-                const s0: string = result[0];
-                const i0: number = result[0];  // this should generate a compilation error
-                const s1: string = result[1];  // this should generate a compilation error
-                const i1: number = result[1];
-            });
-
-        //     inSequence([
+        // it('should pass on the correct derived types', () => {
+        //
+        //     inSequence(
+        //         of('a'),
+        //         ([a]) => {
+        //             const s: string = a;
+        //             const n: number = a;  // this should generate a compilation error
+        //             return of(1)
+        //         },
+        //     ).subscribe(result => {
+        //         const s0: string = result[0];
+        //         const i0: number = result[0];  // this should generate a compilation error
+        //         const s1: string = result[1];  // this should generate a compilation error
+        //         const i1: number = result[1];
+        //     });
+        //
+        //     inSequence(
+        //         of('a'),
+        //         ([a]) => of(1),
+        //         ([a, b]) => {
+        //             const s0: string = a;
+        //             const i0: number = a;  // this should generate a compilation error
+        //             const s1: string = b;
+        //             const i1: number = b;  // this should generate a compilation error
+        //             return of(1)
+        //         },
+        //     ).subscribe(result => {
+        //         const s0: string = result[0];
+        //         const i0: number = result[0];  // this should generate a compilation error
+        //         const s1: string = result[1];  // this should generate a compilation error
+        //         const i1: number = result[1];
+        //     });
+        //
+        //     inSequence(
         //         {a: of('a')},
-        //     ]).subscribe(result => {
+        //     ).subscribe(result => {
         //         const s1: string = result.a;
         //         const i1: number = result.a;  // this should generate a compilation error
         //         const s2: string = result.b;  // this should generate a compilation error
         //     });
         //
-        //     inSequence([
+        //     inSequence(
         //         {a: of(1)},
-        //     ]).subscribe(result => {
+        //     ).subscribe(result => {
         //         const s1: string = result.a;  // this should generate a compilation error
         //         const i1: number = result.a;
         //         const s2: string = result.b;  // this should generate a compilation error
         //     });
         //
-        //     inSequence([
+        //     inSequence(
         //         {a: of('a')},
         //         {b: of(1)},
-        //     ]).subscribe(result => {
+        //     ).subscribe(result => {
         //         const s1: string = result.a;
         //         const i1: number = result.a;  // this should generate a compilation error
         //         const s2: string = result.b;  // this should generate a compilation error
@@ -327,20 +327,33 @@ describe('rxjs-sequence', () => {
         //         const s3: string = result.c;  // this should generate a compilation error
         //     });
         //
-        //     inSequence([
+        //     inSequence(
         //         {a: of('a')},
         //         {b: ({a}) => {
         //             const s: string = a;
         //             const n: number = a;  // this should generate a compilation error
         //             return of(1);
         //         }},
-        //     ]).subscribe(result => {
+        //     ).subscribe(result => {
         //         const s1: string = result.a;
         //         const i1: number = result.a;  // this should generate a compilation error
         //         const s2: string = result.b;  // this should generate a compilation error
         //         const i2: number = result.b;
         //         const s3: string = result.c;  // this should generate a compilation error
         //     });
+        // });
+        //
+        // inSequence(
+        //     {a: of('a')},
+        //     {b: of(1)},
+        //     {c: ({a,b}) => {
+        //             const s1: string = a;
+        //             const n1: number = a;  // this should generate a compilation error
+        //             const s2: string = b;  // this should generate a compilation error
+        //             const i2: number = b;
+        //             return of(1);
+        //         }},
+        // ).subscribe(result => {
         // });
     });
 
