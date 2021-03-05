@@ -41,12 +41,10 @@ type ObsOrFactory<P extends any[], R> = ObservableInput<R> | UnaryFunction<P, Ob
 // Objects whose values are ObsOrFactory
 // Note that if we use the actual ObsOtFactory, rather than duplicating the content, we do not the same type tooltip
 type ObjOfObsOrFactory<P, T> = {[K in keyof T]: (ObservableInput<T[K]> | UnaryFunction<P, ObservableInput<T[K]>>)}
-declare function testObjOfObsOrFactory<T>(prm: ObjOfObsOrFactory<{}, T>): Observable<T>
-testObjOfObsOrFactory({a: of(1)});
-testObjOfObsOrFactory({a: ()=>of(1)});
+
+
 
 /* tslint:disable:max-line-length */
-
 // Versions with values joined into an array
 export function inSequence(): Observable<[]>;
 export function inSequence<A>(source1: ObsOrFactory<[],A>): Observable<[A]>;
