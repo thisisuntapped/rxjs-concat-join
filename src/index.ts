@@ -46,31 +46,31 @@ type ObjOfObsOrFactory<P, T> = {[K in keyof T]: (ObservableInput<T[K]> | UnaryFu
 
 /* tslint:disable:max-line-length */
 // Versions with values joined into an array
-export function inSequence(): Observable<[]>;
-export function inSequence<A>(source1: ObsOrFactory<[],A>): Observable<[A]>;
-export function inSequence<A, B>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>): Observable<[A,B]>;
-export function inSequence<A, B, C>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>, source3: ObsOrFactory<[A,B],C>): Observable<[A,B,C]>;
-export function inSequence<A, B, C, D>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>, source3: ObsOrFactory<[A,B],C>, source4: ObsOrFactory<[A,B,C],D>): Observable<[A,B,C,D]>;
-export function inSequence<A, B, C, D, E>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>, source3: ObsOrFactory<[A,B],C>, source4: ObsOrFactory<[A,B,C],D>, source5: ObsOrFactory<[A,B,C,D],E>): Observable<[A,B,C,D,E]>;
-export function inSequence<A, B, C, D, E, F>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>, source3: ObsOrFactory<[A,B],C>, source4: ObsOrFactory<[A,B,C],D>, source5: ObsOrFactory<[A,B,C,D],E>, source6: ObsOrFactory<[A,B,C,D,E],F>): Observable<[A,B,C,D,E,F]>;
+export function concatJoin(): Observable<[]>;
+export function concatJoin<A>(source1: ObsOrFactory<[],A>): Observable<[A]>;
+export function concatJoin<A, B>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>): Observable<[A,B]>;
+export function concatJoin<A, B, C>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>, source3: ObsOrFactory<[A,B],C>): Observable<[A,B,C]>;
+export function concatJoin<A, B, C, D>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>, source3: ObsOrFactory<[A,B],C>, source4: ObsOrFactory<[A,B,C],D>): Observable<[A,B,C,D]>;
+export function concatJoin<A, B, C, D, E>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>, source3: ObsOrFactory<[A,B],C>, source4: ObsOrFactory<[A,B,C],D>, source5: ObsOrFactory<[A,B,C,D],E>): Observable<[A,B,C,D,E]>;
+export function concatJoin<A, B, C, D, E, F>(source1: ObsOrFactory<[],A>, source2: ObsOrFactory<[A],B>, source3: ObsOrFactory<[A,B],C>, source4: ObsOrFactory<[A,B,C],D>, source5: ObsOrFactory<[A,B,C,D],E>, source6: ObsOrFactory<[A,B,C,D,E],F>): Observable<[A,B,C,D,E,F]>;
 
 // Versions with values joined into an object
 // Note that if we do not use the variable T, and simply put the A&B&C in the function result (which is logically), the
 // tooltips are not as clear
-export function inSequence<A>(sources1: ObjOfObsOrFactory<{}, A>) : Observable<A>
-export function inSequence<A, B, T extends A&B>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>) : Observable<{ [K in keyof T]: T[K] }>
-export function inSequence<A, B, C, T extends A&B&C>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>, sources3: ObjOfObsOrFactory<A&B,C>) : Observable<{ [K in keyof T]: T[K] }>
-export function inSequence<A, B, C, D, T extends A&B&C&D>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>, sources3: ObjOfObsOrFactory<A&B,C>, sources4: ObjOfObsOrFactory<A&B&C,D>) : Observable<{ [K in keyof T]: T[K] }>
-export function inSequence<A, B, C, D, E, T extends A&B&C&D&E>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>, sources3: ObjOfObsOrFactory<A&B,C>, sources4: ObjOfObsOrFactory<A&B&C,D>, sources5: ObjOfObsOrFactory<A&B&C&D,E>) : Observable<{ [K in keyof T]: T[K] }>
-export function inSequence<A, B, C, D, E, F, T extends A&B&C&D&E&F>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>, sources3: ObjOfObsOrFactory<A&B,C>, sources4: ObjOfObsOrFactory<A&B&C,D>, sources5: ObjOfObsOrFactory<A&B&C&D,E>, sources6: ObjOfObsOrFactory<A&B&C&D&E,F>) : Observable<{ [K in keyof T]: T[K] }>
+export function concatJoin<A>(sources1: ObjOfObsOrFactory<{}, A>) : Observable<A>
+export function concatJoin<A, B, T extends A&B>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>) : Observable<{ [K in keyof T]: T[K] }>
+export function concatJoin<A, B, C, T extends A&B&C>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>, sources3: ObjOfObsOrFactory<A&B,C>) : Observable<{ [K in keyof T]: T[K] }>
+export function concatJoin<A, B, C, D, T extends A&B&C&D>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>, sources3: ObjOfObsOrFactory<A&B,C>, sources4: ObjOfObsOrFactory<A&B&C,D>) : Observable<{ [K in keyof T]: T[K] }>
+export function concatJoin<A, B, C, D, E, T extends A&B&C&D&E>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>, sources3: ObjOfObsOrFactory<A&B,C>, sources4: ObjOfObsOrFactory<A&B&C,D>, sources5: ObjOfObsOrFactory<A&B&C&D,E>) : Observable<{ [K in keyof T]: T[K] }>
+export function concatJoin<A, B, C, D, E, F, T extends A&B&C&D&E&F>(sources1: ObjOfObsOrFactory<{}, A>, sources2: ObjOfObsOrFactory<A, B>, sources3: ObjOfObsOrFactory<A&B,C>, sources4: ObjOfObsOrFactory<A&B&C,D>, sources5: ObjOfObsOrFactory<A&B&C&D,E>, sources6: ObjOfObsOrFactory<A&B&C&D&E,F>) : Observable<{ [K in keyof T]: T[K] }>
 
 /* tslint:enable:max-line-length */
 
-export function inSequence(...elements: (ObsOrFactory<any, any> | ObjOfObsOrFactory<any, any>)[] ) {
-    return inSequenceFromArray(elements);
+export function concatJoin(...elements: (ObsOrFactory<any, any> | ObjOfObsOrFactory<any, any>)[] ) {
+    return concatJoinFromArray(elements);
 }
 
-export function inSequenceFromArray(elements: (ObsOrFactory<any, any> | ObjOfObsOrFactory<any, any>)[] ) {
+export function concatJoinFromArray(elements: (ObsOrFactory<any, any> | ObjOfObsOrFactory<any, any>)[] ) {
     if (elements.length===0) return of([]);
 
     // defer so that we can use local variables that are scoped correctly

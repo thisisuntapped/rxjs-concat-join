@@ -1,7 +1,7 @@
 import {TestScheduler} from 'rxjs/testing';
 import {concat, from, merge, of} from 'rxjs';
 import {concatAll, concatMap, delay, toArray} from 'rxjs/operators';
-import {inParallel, inParallelUncollated, inSequence, inSequenceUncollated} from '../index';
+import {inParallel, inParallelUncollated, concatJoin, inSequenceUncollated} from '../index';
 
 
 describe('rxjs-sequence', () => {
@@ -141,7 +141,7 @@ describe('rxjs-sequence', () => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
                 const expected = '(z|))'; const expectedValues = {z: []};
 
-                const obs = inSequence();
+                const obs = concatJoin();
                 expectObservable(obs).toBe(expected, expectedValues);
             });
         });
@@ -153,7 +153,7 @@ describe('rxjs-sequence', () => {
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: ['a', 'b']};
 
-                const obs = inSequence(e1, e2);
+                const obs = concatJoin(e1, e2);
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
@@ -166,7 +166,7 @@ describe('rxjs-sequence', () => {
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: ['a', 'b']};
 
-                const obs = inSequence(()=>e1, ()=>e2);
+                const obs = concatJoin(()=>e1, ()=>e2);
 
                 expectObservable(obs).toBe(expected, expectedValues);
             });
@@ -179,7 +179,7 @@ describe('rxjs-sequence', () => {
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: ['a', 'b', ['a', 'b']]};
 
-                const obs = inSequence(
+                const obs = concatJoin(
                     e1,
                     ()=>e2,
                     ([r1, r2])=>of([r1, r2]),
@@ -196,7 +196,7 @@ describe('rxjs-sequence', () => {
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b'}};
 
-                const obs = inSequence(
+                const obs = concatJoin(
                     {a: e1},
                     {b: e2},
                 );
@@ -212,7 +212,7 @@ describe('rxjs-sequence', () => {
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b'}};
 
-                const obs = inSequence(
+                const obs = concatJoin(
                     {a: ()=>e1},
                     {b: ()=>e2},
                 );
@@ -228,7 +228,7 @@ describe('rxjs-sequence', () => {
                 const e2 =  cold('--(b|)');
                 const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b', c:'bb'}};
 
-                const obs = inSequence(
+                const obs = concatJoin(
                     {a: e1},
                     {b: ()=>e2},
                     {c: ({b})=>of(b + b)},
@@ -246,7 +246,7 @@ describe('rxjs-sequence', () => {
                 const e3 =  cold('--(c|)');
                 const expected = '----(z|))'; const expectedValues = {z: {a:'a', b:'b', c:'c'}};
 
-                const obs = inSequence(
+                const obs = concatJoin(
                     {a: e1, b: e2},
                     {c: e3},
                 );
@@ -255,21 +255,21 @@ describe('rxjs-sequence', () => {
             });
         });
 
-        // UNCOMMENT THE FOLLOWING TEST AND CONFIRM THAT ANNOTATED CALLS TO inSequence GENERATE A COMPILATION ERROR
-        // it('should get a compilation error with invalId inputs to inSequence', () => {
+        // UNCOMMENT THE FOLLOWING TEST AND CONFIRM THAT ANNOTATED CALLS TO concatJoin GENERATE A COMPILATION ERROR
+        // it('should get a compilation error with invalId inputs to concatJoin', () => {
         //     let obs;
-        //     obs = inSequence(1);
-        //     obs = inSequence('a');  // No error - a string has an iterator so matches standard ObservableInput
-        //     obs = inSequence(true);
-        //     obs = inSequence({a: 1});
-        //     obs = inSequence({a: 'a'}); // No error - a string has an iterator so matches standard ObservableInput
-        //     obs = inSequence({a: true});
+        //     obs = concatJoin(1);
+        //     obs = concatJoin('a');  // No error - a string has an iterator so matches standard ObservableInput
+        //     obs = concatJoin(true);
+        //     obs = concatJoin({a: 1});
+        //     obs = concatJoin({a: 'a'}); // No error - a string has an iterator so matches standard ObservableInput
+        //     obs = concatJoin({a: true});
         // });
 
         // UNCOMMENT THE FOLLOWING TESTs AND CONFIRM THAT ANNOTATED LINES GENERATE A COMPILATION ERROR
         // it('should pass on the correct derived types', () => {
         //
-        //     inSequence(
+        //     concatJoin(
         //         of('a'),
         //         ([a]) => {
         //             const s: string = a;
@@ -283,7 +283,7 @@ describe('rxjs-sequence', () => {
         //         const i1: number = result[1];
         //     });
         //
-        //     inSequence(
+        //     concatJoin(
         //         of('a'),
         //         ([a]) => of(1),
         //         ([a, b]) => {
@@ -300,7 +300,7 @@ describe('rxjs-sequence', () => {
         //         const i1: number = result[1];
         //     });
         //
-        //     inSequence(
+        //     concatJoin(
         //         {a: of('a')},
         //     ).subscribe(result => {
         //         const s1: string = result.a;
@@ -308,7 +308,7 @@ describe('rxjs-sequence', () => {
         //         const s2: string = result.b;  // this should generate a compilation error
         //     });
         //
-        //     inSequence(
+        //     concatJoin(
         //         {a: of(1)},
         //     ).subscribe(result => {
         //         const s1: string = result.a;  // this should generate a compilation error
@@ -316,7 +316,7 @@ describe('rxjs-sequence', () => {
         //         const s2: string = result.b;  // this should generate a compilation error
         //     });
         //
-        //     inSequence(
+        //     concatJoin(
         //         {a: of('a')},
         //         {b: of(1)},
         //     ).subscribe(result => {
@@ -327,7 +327,7 @@ describe('rxjs-sequence', () => {
         //         const s3: string = result.c;  // this should generate a compilation error
         //     });
         //
-        //     inSequence(
+        //     concatJoin(
         //         {a: of('a')},
         //         {b: ({a}) => {
         //             const s: string = a;
@@ -343,7 +343,7 @@ describe('rxjs-sequence', () => {
         //     });
         // });
         //
-        // inSequence(
+        // concatJoin(
         //     {a: of('a')},
         //     {b: of(1)},
         //     {c: ({a,b}) => {
