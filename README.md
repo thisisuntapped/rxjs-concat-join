@@ -7,6 +7,7 @@ It is similar to *forkJoin* but the requests are issued sequentially, and the re
 be used in later requests.
 
 ## Installation
+***
 
 ### ES6
 ```
@@ -25,6 +26,7 @@ const { concatJoin } = require('rxjs-concat-join');
 ```
 
 ## Usage
+***
 
 *concatJoin* can be viewed as a combination of *concat*, *forkJoin* and *pipe*.
 
@@ -39,7 +41,7 @@ concatJoin( of(1), of(2) ).subscribe(console.log);
 // outputs: [1, 2]
 ```
 
-A key featur of *concatJoin* is that the array of results is built up request-by-request, so that the 
+A key feature of *concatJoin* is that the array of results is built up request-by-request, so that the 
 results of earlier requests can be use in later requests using a factory function, e.g.:
 ```
 concatJoin(
@@ -80,3 +82,6 @@ concatJoin(
 // outputs: {result1: 1, result2: 2, result3: 3} 
 // Requests 1 & 2 are issued at the same time.  Request 3 is issued when both 1 & 2 have completed. 
 ```
+## Credits
+***
+*rxjs-concat-join* was developed by [Untapped](https://thisisuntapped.com/)
