@@ -1,79 +1,82 @@
-# rxjs-sequence
+# rxjs-concat-join
 
-rxjs-sequence provides the RxJS operator *inSequence*, which is directly equivalent to *forkJoin* except that the requests are made in sequence instead of in parallel.  The results are collated into an array or object as for *forkJoin*.
+The rxjs-concat-join package provides the single RxJS utility operator *concatJoin*, which is used to simplify the 
+process of issuing a series of sequential requests and collecting together the results.
 
-rxjs-sequence also provides ithe corresponding *inParallel* as a synonym for *forkJoin* that corresonds to *inSequence*.
+It is similar to *forkJoin* but the requests are issued sequentially, and the results of earlier requests can 
+be used in later requests.
 
-*inSequence* and *inParallel* have one other key difference from forkJoin: if the set of requests is empty then an empty array or object of results is emited (it isn't with forkJoin) so that downstream processing still occurs.
+## Installation
 
-Typically the reason for performing requests in sequence is that the results of earlier requests are used as inputs to later requests.  This is sometimes referred to as "chaining" requests.  Chaining requires a fair amount of boilerplate using raw RxJS.  A solution to simplify this common requirement is also provided.
-
-# Example Usage
-
-Examples of using *inSequence* and *inParallel* in exactly the same way as *forkJoin*:
+### ES6
 ```
-obs1$ = of(1);
-obs2$ = of(2);
-obs3$ = of(3);
-
-inSequence([]).subscribe(console.log);
-// outputs: []
-
-inSequence([obs1$, obs2$, obs3$]).subscribe(console.log);
-// outputs: [1, 2, 3]
-
-inParallel([]).subscribe(console.log);
-// outputs: []
-
-inParallel([obs1$, obs2$, obs3$]).subscribe(console.log);
-// outputs: [1, 2, 3]
-
-inParallel({}).subscribe(console.log);
-// outputs: {}
-
-inParallel({a: obs1$, b: obs2$, c: obs3$}).subscribe(console.log);
-// outputs: {a: 1, b: 2, c: 3}
-
+npm install rxjs-concat-join
+```
+```
+import { concatJoin } from "rxjs-concat-join";
 ```
 
-Next is an examples of using *inSequence* with an object.  Note that we cannot use exactly the same approach as *forkJoin* because we want to guarantee the order of requests, which is not possible with an object.  Instead we pass an array of objects and the outputs are merged into a single object:
+### CommonJS
 ```
-inSequence([
-  {result1: obs1$}, 
-  {result2: obs2$}, 
-  {result3: obs3$}
-]).subscribe(console.log);
-// outputs: {result1: 1, result2: 2, result3: 3} 
+npm install rxjs-concat-join
+```
+```
+const { concatJoin } = require('rxjs-concat-join');
 ```
 
-Example of a sequence where the 3rd request is dependendent on the 2nd.  The array that is passed into the 3rd request is the collation of the results of all    previous requests in the sequence up to that point.  This exactly the same as the array returned when the whole function is complete (with fewer values).   
+## Usage
+
+*concatJoin* can be viewed as a combination of *concat*, *forkJoin* and *pipe*.
+
+Like *concat* it consists of a list of observables that are subscribed to in turn, e.g.:
 ```
-inSequence([
-  obs1$, 
-  obs2$, 
+concatJoin( of(1), of(2) );
+```
+
+Like *forkJoin* the result is an observable of an array of the last value of each inner observable:  
+```
+concatJoin( of(1), of(2) ).subscribe(console.log);
+// outputs: [1, 2]
+```
+
+A key featur of *concatJoin* is that the array of results is built up request-by-request, so that the 
+results of earlier requests can be use in later requests using a factory function, e.g.:
+```
+concatJoin(
+  of(1), 
+  of(2), 
   ([,result2])=>of(result2+1)
-]).subscribe(console.log);
+).subscribe(console.log);
 // outputs: [1, 2, 3] 
 ```
 
-The equivalent approach with objects:
+It is also possible to use the object notation available in *forkJoin*. Note however that properties of objects 
+are not ordered, so instead we input a list of objects, while the outputs are merged into a single object:
 ```
-inSequence([
-  {result1: obs1$}, 
-  {result2: obs2$}, 
+concatJoin(
+  {result1: of(1)}, 
+  {result2: of(2)}, 
+).subscribe(console.log);
+// outputs: {result1: 1, result2: 2} 
+```
+
+And making use of the interim accumulated value:
+```
+concatJoin(
+  {result1: of(1)}, 
+  {result2: of(2)}, 
   {result3: ({result2})=>of(result2+1)}
-]).subscribe(console.log);
+).subscribe(console.log);
 // outputs: {result1: 1, result2: 2, result3: 3} 
 ```
 
-Finally, we can nest parallel groups wihin the overall sequence and the results will be automatically expanded to provide a single array or object of results.  In this way changing whether requests are made in seques or parallel has no impact outside the outer operator call.
+Finally, when using the object notation, each object is in fact passed to *forkJoin*.  In this way 
+a combination of parallel and sequential requests can be constructed:
 ```
-inParallel([
-  {result1: obs1$},
-  inSequence([
-    {result2: obs2$}, 
-    {result3: ({result2})=>of(result2+1)},
-   ]),
-]).subscribe(console.log);
+concatJoin(
+  {result1: of(1), result2: of(2)}, 
+  {result3: ({result2})=>of(result2+1)}
+).subscribe(console.log);
 // outputs: {result1: 1, result2: 2, result3: 3} 
+// Requests 1 & 2 are issued at the same time.  Request 3 is issued when both 1 & 2 have completed. 
 ```
