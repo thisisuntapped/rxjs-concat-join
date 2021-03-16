@@ -220,6 +220,17 @@ describe('rxjs-sequence', () => {
             });
         });
 
+        it('allow empty object', () => {
+            testScheduler.run(helpers => {
+                const {cold, expectObservable, expectSubscriptions} = helpers;
+                const expected = '(z|))'; const expectedValues = {z: {}};
+
+                const obs = concatJoin({});
+
+                expectObservable(obs).toBe(expected, expectedValues);
+            });
+            });
+
         it('allow object values to be empty', () => {
             testScheduler.run(helpers => {
                 const {cold, expectObservable, expectSubscriptions} = helpers;
@@ -234,106 +245,6 @@ describe('rxjs-sequence', () => {
             });
         });
 
-        // UNCOMMENT THE FOLLOWING TEST AND CONFIRM THAT ANNOTATED CALLS TO concatJoin GENERATE A COMPILATION ERROR
-        // it('should get a compilation error with invalid inputs to concatJoin', () => {
-        //     let obs;
-        //     obs = concatJoin(1);
-        //     obs = concatJoin('a');  // No error - a string has an iterator so matches standard ObservableInput
-        //     obs = concatJoin(true);
-        //     obs = concatJoin({a: 1});
-        //     obs = concatJoin({a: 'a'}); // No error - a string has an iterator so matches standard ObservableInput
-        //     obs = concatJoin({a: true});
-        // });
-
-        // UNCOMMENT THE FOLLOWING TESTs AND CONFIRM THAT ANNOTATED LINES GENERATE A COMPILATION ERROR
-        // it('should pass on the correct derived types', () => {
-        //
-        //     concatJoin(
-        //         of('a'),
-        //         ([a]) => {
-        //             const s: string = a;
-        //             const n: number = a;  // this should generate a compilation error
-        //             return of(1)
-        //         },
-        //     ).subscribe(result => {
-        //         const s0: string = result[0];
-        //         const i0: number = result[0];  // this should generate a compilation error
-        //         const s1: string = result[1];  // this should generate a compilation error
-        //         const i1: number = result[1];
-        //     });
-        //
-        //     concatJoin(
-        //         of('a'),
-        //         ([a]) => of(1),
-        //         ([a, b]) => {
-        //             const s0: string = a;
-        //             const i0: number = a;  // this should generate a compilation error
-        //             const s1: string = b;
-        //             const i1: number = b;  // this should generate a compilation error
-        //             return of(1)
-        //         },
-        //     ).subscribe(result => {
-        //         const s0: string = result[0];
-        //         const i0: number = result[0];  // this should generate a compilation error
-        //         const s1: string = result[1];  // this should generate a compilation error
-        //         const i1: number = result[1];
-        //     });
-        //
-        //     concatJoin(
-        //         {a: of('a')},
-        //     ).subscribe(result => {
-        //         const s1: string = result.a;
-        //         const i1: number = result.a;  // this should generate a compilation error
-        //         const s2: string = result.b;  // this should generate a compilation error
-        //     });
-        //
-        //     concatJoin(
-        //         {a: of(1)},
-        //     ).subscribe(result => {
-        //         const s1: string = result.a;  // this should generate a compilation error
-        //         const i1: number = result.a;
-        //         const s2: string = result.b;  // this should generate a compilation error
-        //     });
-        //
-        //     concatJoin(
-        //         {a: of('a')},
-        //         {b: of(1)},
-        //     ).subscribe(result => {
-        //         const s1: string = result.a;
-        //         const i1: number = result.a;  // this should generate a compilation error
-        //         const s2: string = result.b;  // this should generate a compilation error
-        //         const i2: number = result.b;
-        //         const s3: string = result.c;  // this should generate a compilation error
-        //     });
-        //
-        //     concatJoin(
-        //         {a: of('a')},
-        //         {b: ({a}) => {
-        //             const s: string = a;
-        //             const n: number = a;  // this should generate a compilation error
-        //             return of(1);
-        //         }},
-        //     ).subscribe(result => {
-        //         const s1: string = result.a;
-        //         const i1: number = result.a;  // this should generate a compilation error
-        //         const s2: string = result.b;  // this should generate a compilation error
-        //         const i2: number = result.b;
-        //         const s3: string = result.c;  // this should generate a compilation error
-        //     });
-        // });
-        //
-        // concatJoin(
-        //     {a: of('a')},
-        //     {b: of(1)},
-        //     {c: ({a,b}) => {
-        //             const s1: string = a;
-        //             const n1: number = a;  // this should generate a compilation error
-        //             const s2: string = b;  // this should generate a compilation error
-        //             const i2: number = b;
-        //             return of(1);
-        //         }},
-        // ).subscribe(result => {
-        // });
     });
 
 });
