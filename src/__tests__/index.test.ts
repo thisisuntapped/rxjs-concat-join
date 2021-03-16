@@ -1,7 +1,7 @@
 import {TestScheduler} from 'rxjs/testing';
 import {concat, from, merge, of} from 'rxjs';
 import {concatAll, concatMap, delay, toArray} from 'rxjs/operators';
-import {inParallel, inParallelUncollated, concatJoin, inSequenceUncollated} from '../index';
+import {concatJoin} from '../index';
 
 
 describe('rxjs-sequence', () => {
@@ -99,42 +99,7 @@ describe('rxjs-sequence', () => {
 
     });
 
-    describe('inParallel', () => {
-
-        it('should emit [] for input []', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const expected = '(z|))'; const expectedValues = {z: []};
-
-                const obs = inParallel([]);
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-
-        it('should emit {} for input {}', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const expected = '(z|))'; const expectedValues = {z: {}};
-
-                const obs = inParallel({});
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-
-        it('should pass through any other input to forkJoin', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--a|');
-                const e2 =  cold('---b|');
-                const expected = '----(z|)'; const expectedValues = {z: ['a', 'b']};
-
-                const obs = inParallel([e1, e2]);
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-    });
-
-    describe('inSequence', () => {
+    describe('concatJoin', () => {
 
         it('should emit [] if no input', () => {
             testScheduler.run(helpers => {
@@ -255,8 +220,22 @@ describe('rxjs-sequence', () => {
             });
         });
 
+        it('allow object values to be empty', () => {
+            testScheduler.run(helpers => {
+                const {cold, expectObservable, expectSubscriptions} = helpers;
+                const expected = '(z|))'; const expectedValues = {z: {}};
+
+                const obs = concatJoin(
+                    {},
+                    {},
+                );
+
+                expectObservable(obs).toBe(expected, expectedValues);
+            });
+        });
+
         // UNCOMMENT THE FOLLOWING TEST AND CONFIRM THAT ANNOTATED CALLS TO concatJoin GENERATE A COMPILATION ERROR
-        // it('should get a compilation error with invalId inputs to concatJoin', () => {
+        // it('should get a compilation error with invalid inputs to concatJoin', () => {
         //     let obs;
         //     obs = concatJoin(1);
         //     obs = concatJoin('a');  // No error - a string has an iterator so matches standard ObservableInput
@@ -356,57 +335,5 @@ describe('rxjs-sequence', () => {
         // ).subscribe(result => {
         // });
     });
-
-    describe('inSequenceUncollated', () => {
-
-        it('should emit event for input []', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const expected = '(z|))'; const expectedValues = {z: void 0};
-
-                const obs = inSequenceUncollated([]);
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-
-        it('should emit event when all inner observables complete', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--(a|)');
-                const e2 =  cold('---(b|)');
-                const expected = '-----(z|)'; const expectedValues = {z: void 0};
-
-                const obs = inSequenceUncollated([e1, e2]);
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-    });
-
-    describe('inParallelUncollated', () => {
-
-        it('should emit event for input []', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const expected = '(z|))'; const expectedValues = {z: void 0};
-
-                const obs = inParallelUncollated([]);
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-
-        it('should emit event when all inner observables complete', () => {
-            testScheduler.run(helpers => {
-                const {cold, expectObservable, expectSubscriptions} = helpers;
-                const e1 =  cold('--(a|)');
-                const e2 =  cold('---(b|)');
-                const expected = '---(z|)'; const expectedValues = {z: void 0};
-
-                const obs = inParallelUncollated([e1, e2]);
-                expectObservable(obs).toBe(expected, expectedValues);
-            });
-        });
-    });
-
-
 
 });

@@ -1,39 +1,6 @@
-import {concatAll, last, map, mapTo, mergeMap, tap} from 'rxjs/operators';
-import {concat, defer, forkJoin, from, Observable, ObservedValueOf, of, throwError} from 'rxjs';
-import {ObservableInput, ObservedValuesFromArray, UnaryFunction} from 'rxjs/internal/types';
-
-/**
- * inParallel is a wrapper for forkJoin, with exactly the same signature options.  It differs only in
- * that it emits an empty array or object if the input array or object is empty.
- *
- * Note that to replicate the signatures for forkJoin we need to include types that are internal to
- * rxjs.
- */
-
-/* tslint:disable:max-line-length */
-export function inParallel(sources: []): Observable<[]>;
-export function inParallel<A>(sources: [ObservableInput<A>]): Observable<[A]>;
-export function inParallel<A, B>(sources: [ObservableInput<A>, ObservableInput<B>]): Observable<[A, B]>;
-export function inParallel<A, B, C>(sources: [ObservableInput<A>, ObservableInput<B>, ObservableInput<C>]): Observable<[A, B, C]>;
-export function inParallel<A, B, C, D>(sources: [ObservableInput<A>, ObservableInput<B>, ObservableInput<C>, ObservableInput<D>]): Observable<[A, B, C, D]>;
-export function inParallel<A, B, C, D, E>(sources: [ObservableInput<A>, ObservableInput<B>, ObservableInput<C>, ObservableInput<D>, ObservableInput<E>]): Observable<[A, B, C, D, E]>;
-export function inParallel<A, B, C, D, E, F>(sources: [ObservableInput<A>, ObservableInput<B>, ObservableInput<C>, ObservableInput<D>, ObservableInput<E>, ObservableInput<F>]): Observable<[A, B, C, D, E, F]>;
-export function inParallel<A extends ObservableInput<any>[]>(sources: A): Observable<ObservedValuesFromArray<A>[]>;
-export function inParallel(sourcesObject: {}): Observable<{}>;
-export function inParallel<T, K extends keyof T>(sourcesObject: T): Observable<{ [K in keyof T]: ObservedValueOf<T[K]> }>;
-
-/* tslint:enable:max-line-length */
-
-// tslint:disable-next-line:ban-types
-export function inParallel(sources: any[] | Object): Observable<any> {
-    if (Array.isArray(sources) && sources.length===0) {
-        return of([]);
-    } else if (typeof sources ==='object' && Object.keys(sources).length===0) {
-        return of ({});
-    } else {
-        return forkJoin(sources);
-    }
-}
+import {concatAll, last, map, tap} from 'rxjs/operators';
+import {defer, forkJoin, from, Observable, of} from 'rxjs';
+import {ObservableInput, UnaryFunction} from 'rxjs/internal/types';
 
 // Observable, or Factory that derives an Observable from a single value
 type ObsOrFactory<P extends any[], R> = ObservableInput<R> | UnaryFunction<P, ObservableInput<R>>
@@ -45,6 +12,7 @@ type ObjOfObsOrFactory<P, T> = {[K in keyof T]: (ObservableInput<T[K]> | UnaryFu
 
 
 /* tslint:disable:max-line-length */
+
 // Versions with values joined into an array
 export function concatJoin(): Observable<[]>;
 export function concatJoin<A>(source1: ObsOrFactory<[],A>): Observable<[A]>;
@@ -96,7 +64,7 @@ export function concatJoinFromArray(elements: (ObsOrFactory<any, any> | ObjOfObs
 
                 // Use defer to use the value of results-so-far at the point of subscription for all inner
                 // functions at once
-                return defer ( ()=> inParallel(
+                return defer ( ()=> forkJoinHandlingEmpty(
                     // replace all values for the object with proper observables, ie if its a function then call
                     // the function with the results-so-far.
                     Object.fromEntries(Object.entries(element).map(([k, obsOrFunc]) =>
@@ -137,10 +105,16 @@ function isPOJO(obj: any): obj is ObjOfObsOrFactory<any, any> {
     return obj && typeof obj === 'object' && Object.getPrototypeOf(obj) === Object.prototype;
 }
 
-export function inSequenceUncollated(observables: ObservableInput<any>[]): Observable<void> {
-    return observables.length>0? concat(...observables).pipe(last(), mapTo(void 0)) : of(void 0);
+// Utility function - same as forkJoin except that when the input is an empty array or object it emits
+// an empty result
+function forkJoinHandlingEmpty(sources: any[] | Object): Observable<any> {
+    if (Array.isArray(sources) && sources.length===0) {
+        return of([]);
+    } else if (typeof sources ==='object' && Object.keys(sources).length===0) {
+        return of ({});
+    } else {
+        return forkJoin(sources);
+    }
 }
 
-export function inParallelUncollated(observables: ObservableInput<any>[]): Observable<void> {
-    return inParallel(observables).pipe(mapTo(void 0));
-}
+
