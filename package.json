@@ -1,6 +1,6 @@
 {
   "name": "rxjs-concat-join",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Provides the concatJoin RxJS operator, used to simplify lists of sequential requests with accumulation of the results",
   "main": "./lib/index.js",
   "module": "./lib/esm/wrapper.js",
@@ -9,7 +9,9 @@
     "import": "./lib/esm/wrapper.js"
   },
   "types": "lib/index.d.ts",
-  "files": ["lib/**/*"],
+  "files": [
+    "lib/**/*"
+  ],
   "directories": {
     "test": "tests"
   },
