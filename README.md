@@ -84,4 +84,4 @@ concatJoin(
 ```
 ## Credits
 ***
-*rxjs-concat-join* was developed by [Untapped](https://thisisuntapped.com/)
+*rxjs-concat-join* was developed by [Untapped Solution Ltd](https://thisisuntapped.com/)
