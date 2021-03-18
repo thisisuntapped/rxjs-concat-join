@@ -1,31 +1,42 @@
 {
-  "name": "rxjs-sequence",
+  "name": "rxjs-concat-join",
   "version": "1.0.0",
-  "description": "RxJS extension to provide direct support for a sequence of requests",
-  "main": "index.js",
+  "description": "Provides the concatJoin RxJS operator, used to simplify lists of sequential requests with accumulation of the results",
+  "exports": {
+    "require": "./index.js",
+    "import": "./esm/wrapper.js"
+  },
+  "types": "lib/index.d.ts",
+  "files": ["lib/**/*"],
   "directories": {
     "test": "tests"
   },
   "scripts": {
     "test": "jest --config jestconfig.json",
-    "build": "tsc"
+    "build": "tsc && cp -R src/esm lib/esm",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test",
+    "preversion": "npm test",
+    "version": "npm run build && git add -A src",
+    "postversion": "git push && git push --tags"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yoxallj/rxjs-sequence.git"
+    "url": "github:thisisuntapped/rxjs-concat-join"
   },
   "keywords": [
     "rxjs",
-    "sequence",
     "chaining",
-    "series"
+    "sequence",
+    "series",
+    "concatJoin"
   ],
-  "author": "James Yoxall",
+  "author": "Untapped Solutions Ltd",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yoxallj/rxjs-sequence/issues"
+    "url": "https://github.com/thisisuntapped/rxjs-concat-join/issues"
   },
-  "homepage": "https://github.com/yoxallj/rxjs-sequence#readme",
+  "homepage": "https://github.com/thisisuntapped/rxjs-concat-join#readme",
   "devDependencies": {
     "@types/jest": "^26.0.20",
     "jest": "^26.6.3",
