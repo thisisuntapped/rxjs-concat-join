@@ -6,6 +6,8 @@ process of issuing a series of sequential requests and collecting together the r
 It is similar to *forkJoin* but the requests are issued sequentially, and the results of earlier requests can 
 be used in later requests.
 
+You can find more infomation on the usage and thinking behind the implementation on our website here: https://thisisuntapped.com/articles/aggregating-rxjs-requests.html
+
 ## Installation
 ***
 
